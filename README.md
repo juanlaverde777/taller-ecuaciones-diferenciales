@@ -6,233 +6,158 @@ Ecuaciones Diferenciales — 2026
 
 ## Cómo lo resolví
 
-Usé GeoGebra Clásico para los campos de direcciones y las curvas solución (comandos `CampoDirecciones` y `ResuelveEDO`), y WolframAlpha (`Roots`, `Reduce`) para hallar y clasificar los puntos críticos en los diagramas de fase, tal como lo indica la guía. Dejo en cada punto los comandos que usé y el análisis correspondiente.
+Como asistente computacional usé Python (numpy, matplotlib, scipy y sympy) en lugar de GeoGebra: para el punto 1 armé una función que dibuja el campo de direcciones y superpone la familia de soluciones junto con la solución particular pedida; para los puntos 2, 3 y 4 hallo los puntos críticos con sympy (raíces reales del polinomio g(y) o g(P)), clasifico su estabilidad evaluando el signo de la derivada a lado y lado, y grafico el diagrama de fase junto con la recta de fase. Para el punto 3 y 4 además integro numéricamente (`solve_ivp`) las trayectorias P(t) de cada condición inicial para verificar el comportamiento que predice el diagrama de fase.
+
+Cada punto está en su propia carpeta con el script que genera las gráficas (carpeta `img/`).
+
+### Cómo correr los scripts
+
+```
+pip install -r requirements.txt
+python punto_1/punto_1.py
+python punto_2/punto_2.py
+python punto_3/punto_3.py
+python punto_4/punto_4.py
+```
 
 ---
 
 ## Punto 1 — Campo de pendientes y solución particular
 
-Para cada ecuación dejo el comando del campo de direcciones y el de la curva solución. En los literales que no traían condición inicial elegí un punto arbitrario para poder graficar la familia de soluciones.
+Script: [`punto_1/punto_1.py`](punto_1/punto_1.py)
+
+En los literales c), d) y e) el enunciado no da condición inicial, así que elegí un punto arbitrario (queda indicado en cada gráfica) para poder trazar la familia de soluciones y una curva particular.
 
 ### a) y' = -y - sin(x), con y(0) = 1
 
-```
-campo_a = CampoDirecciones(-y-sin(x))
-ResuelveEDO(-y-sin(x),(0,1))
-```
+Lineal de primer orden. Con factor integrante e^x se obtiene la solución general y = (cos x - sen x)/2 + C·e^(-x); con y(0) = 1 resulta C = 1/2.
 
-Con el campo se ve que las curvas tienden a "amortiguarse" alrededor de una solución oscilante decreciente en amplitud, coherente con el término `-y` actuando como amortiguamiento sobre el forzamiento `sin(x)`.
+![Punto 1a](punto_1/img/1a.png)
 
 ### b) y' = x + y, con y(-2) = 2
 
-```
-campo_b = CampoDirecciones(x+y)
-ResuelveEDO(x+y,(-2,2))
-```
+Lineal. Solución general y = C·e^x - x - 1; con y(-2) = 2 resulta C = e².
 
-Es una lineal de primer orden; la solución que pasa por (-2,2) se aleja rápidamente de la recta y = -x - 1 (que es donde la pendiente se anula), que es la asíntota que se nota en el campo.
+![Punto 1b](punto_1/img/1b.png)
 
-### c) y' = -x² + sin(y)
+### c) y' = -x² + sin(y)  (sin condición inicial, se eligió y(0) = 0)
 
-No da condición inicial, así que tomé el punto (0,0).
+No tiene solución elemental en forma cerrada, así que la curva se obtuvo integrando numéricamente hacia adelante y hacia atrás en x.
 
-```
-campo_c = CampoDirecciones(-x^2+sin(y))
-ResuelveEDO(-x^2+sin(y),(0,0))
-```
+![Punto 1c](punto_1/img/1c.png)
 
-### d) (x² + 1)y' + 3xy = 6x
+### d) (x² + 1)y' + 3xy = 6x  (sin condición inicial, se eligió y(0) = 1)
 
-Despejando y':
+Despejando, y' = (6x - 3xy)/(x² + 1), lineal. Con factor integrante (x²+1)^(3/2) se obtiene y = 2 + C·(x²+1)^(-3/2); con y(0)=1 resulta C = -1.
 
-y' = (6x - 3xy) / (x² + 1)
+![Punto 1d](punto_1/img/1d.png)
 
-Tomé como condición inicial (0,1).
+### e) y' = x·e^y  (sin condición inicial, se eligió y(0) = 0)
 
-```
-campo_d = CampoDirecciones((6x-3xy)/(x^2+1))
-ResuelveEDO((6x-3xy)/(x^2+1),(0,1))
-```
+Separable: e^(-y) dy = x dx → y = -ln(K - x²/2). Con y(0)=0 resulta K = 1, y la solución solo existe para |x| < √2 (asíntota vertical, se ve en la gráfica).
 
-### e) y' = x·e^y
-
-Tomé como condición inicial (0,0).
-
-```
-campo_e = CampoDirecciones(x*e^y)
-ResuelveEDO(x*e^y,(0,0))
-```
+![Punto 1e](punto_1/img/1e.png)
 
 ### f) y' = x - y, con y(1) = 1
 
-```
-campo_f = CampoDirecciones(x-y)
-ResuelveEDO(x-y,(1,1))
-```
+Lineal. Solución general y = (x - 1) + C·e^(-x); con y(1) = 1 resulta C = e.
 
-La solución que pasa por (1,1) queda prácticamente sobre la recta y = x - 1, que es donde el campo tiene pendiente nula.
+![Punto 1f](punto_1/img/1f.png)
 
 ---
 
 ## Punto 2 — Diagrama de fase y puntos críticos
 
-Para cada ecuación autónoma y' = g(y) hallé las raíces de g con `Roots[...]` y clasifiqué el signo con `Reduce[g(y)>0,y]` / `Reduce[g(y)<0,y]`, igual que en el ejemplo de la guía.
+Script: [`punto_2/punto_2.py`](punto_2/punto_2.py)
+
+Para cada ecuación autónoma y' = g(y) el script factoriza y halla las raíces reales de g con sympy, evalúa el signo de g justo a la izquierda y a la derecha de cada raíz para clasificarla, y grafica g(y) contra y (regiones de crecimiento en verde, decrecimiento en rojo) junto con la recta de fase.
 
 ### a) y' = y(3 - y)(y - 2)
 
-```
-Roots[c*(3-c)*(c-2)==0,c]
-Reduce[c*(3-c)*(c-2)>0,c]
-Reduce[c*(3-c)*(c-2)<0,c]
-```
+Puntos críticos: y = 0 (**estable**), y = 2 (**inestable**), y = 3 (**estable**).
 
-Puntos críticos: c = 0, c = 2, c = 3.
-g(y) > 0 en (-∞,0) ∪ (2,3); g(y) < 0 en (0,2) ∪ (3,∞).
+![Punto 2a](punto_2/img/2a.png)
 
-- y = 0: crece por la izquierda y decrece por la derecha → **asintóticamente estable**.
-- y = 2: decrece por la izquierda y crece por la derecha → **inestable**.
-- y = 3: crece por la izquierda y decrece por la derecha → **asintóticamente estable**.
+### b) y' = y² - y³
 
-### b) y' = y² - y³ = y²(1 - y)
+Puntos críticos: y = 0 (**semiestable**, crece a ambos lados), y = 1 (**estable**).
 
-```
-Roots[c^2*(1-c)==0,c]
-Reduce[c^2*(1-c)>0,c]
-Reduce[c^2*(1-c)<0,c]
-```
-
-Puntos críticos: c = 0 (raíz doble), c = 1.
-g(y) > 0 en (-∞,0) ∪ (0,1); g(y) < 0 en (1,∞).
-
-- y = 0: el signo es positivo a ambos lados (crece por los dos lados) → **semiestable**.
-- y = 1: crece por la izquierda, decrece por la derecha → **asintóticamente estable**.
+![Punto 2b](punto_2/img/2b.png)
 
 ### c) y' = (y + 2)(10 + 3y - y²)
 
-Factorizando 10 + 3y - y² = -(y-5)(y+2), queda g(y) = -(y+2)²(y-5).
+Factorizando, 10 + 3y - y² = -(y-5)(y+2), así que g(y) = -(y+2)²(y-5). Puntos críticos: y = -2 (**semiestable**), y = 5 (**estable**).
 
-```
-Roots[(c+2)*(10+3c-c^2)==0,c]
-Reduce[(c+2)*(10+3c-c^2)>0,c]
-Reduce[(c+2)*(10+3c-c^2)<0,c]
-```
+![Punto 2c](punto_2/img/2c.png)
 
-Puntos críticos: c = -2 (raíz doble), c = 5.
-g(y) > 0 en (-∞,-2) ∪ (-2,5); g(y) < 0 en (5,∞).
+### d) y' = y⁵ - 4y³ - 5y²
 
-- y = -2: crece a ambos lados → **semiestable**.
-- y = 5: crece por la izquierda, decrece por la derecha → **asintóticamente estable**.
+g(y) = y²(y³ - 4y - 5). El factor cúbico solo tiene una raíz real (las otras dos son complejas), y ≈ 2.4567. Puntos críticos: y = 0 (**semiestable**, decrece a ambos lados), y ≈ 2.4567 (**inestable**).
 
-### d) y' = y⁵ - 4y³ - 5y² = y²(y³ - 4y - 5)
-
-```
-Roots[c^5-4c^3-5c^2==0,c]
-Reduce[c^5-4c^3-5c^2>0,c]
-Reduce[c^5-4c^3-5c^2<0,c]
-```
-
-El factor y³ - 4y - 5 solo tiene una raíz real, c ≈ 2.455 (las otras dos son complejas). Los puntos críticos reales son c = 0 (doble) y c ≈ 2.455.
-g(y) < 0 en (-∞,0) ∪ (0, 2.455); g(y) > 0 en (2.455,∞).
-
-- y = 0: decrece a ambos lados (a la izquierda se aleja hacia -∞, a la derecha se acerca a 0) → **semiestable**.
-- y ≈ 2.455: decrece por la izquierda, crece por la derecha, ambos lados se alejan → **inestable**.
+![Punto 2d](punto_2/img/2d.png)
 
 ### e) y' = (1 - y)(y - 2)³
 
-```
-Roots[(1-c)*(c-2)^3==0,c]
-Reduce[(1-c)*(c-2)^3>0,c]
-Reduce[(1-c)*(c-2)^3<0,c]
-```
+Puntos críticos: y = 1 (**inestable**), y = 2 (**estable**).
 
-Puntos críticos: c = 1, c = 2.
-g(y) < 0 en (-∞,1) ∪ (2,∞); g(y) > 0 en (1,2).
-
-- y = 1: decrece por la izquierda, crece por la derecha, ambos lados se alejan de 1 → **inestable**.
-- y = 2: crece por la izquierda, decrece por la derecha, ambos lados se acercan a 2 → **asintóticamente estable**.
+![Punto 2e](punto_2/img/2e.png)
 
 ---
 
 ## Punto 3 — Población P(t), dP/dt = P(P-1)(2-P), P en miles
 
-```
-Roots[c*(c-1)*(2-c)==0,c]
-Reduce[c*(c-1)*(2-c)>0,c]
-Reduce[c*(c-1)*(2-c)<0,c]
-```
-
-Puntos críticos: P = 0, P = 1, P = 2.
-g(P) > 0 en (-∞,0) ∪ (1,2); g(P) < 0 en (0,1) ∪ (2,∞).
+Script: [`punto_3/punto_3.py`](punto_3/punto_3.py)
 
 ### a) Diagrama de fase
 
-- P = 0: **estable** (crece por la izquierda, decrece por la derecha, ambos lados se acercan).
-- P = 1: **inestable** (decrece por la izquierda, crece por la derecha, ambos lados se alejan).
-- P = 2: **estable** (crece por la izquierda, decrece por la derecha, ambos lados se acercan).
+Puntos críticos: P = 0 (**estable**), P = 1 (**inestable**), P = 2 (**estable**).
 
-### b) P inicial = 3000 (P₀ = 3)
+![Punto 3 fase](punto_3/img/3_fase.png)
 
-3 está en la región P > 2, donde g(P) < 0, así que P decrece hacia el equilibrio estable P = 2. A largo plazo la población tiende a **2000 ejemplares**.
+### b), c), d) y e) — trayectorias P(t)
 
-### c) P inicial = 1500 (P₀ = 1.5)
+Integrando numéricamente dP/dt = P(P-1)(2-P) para cada condición inicial se confirma exactamente lo que predice el diagrama de fase:
 
-1.5 está en (1,2), donde g(P) > 0, así que P crece hacia P = 2. A largo plazo tiende también a **2000 ejemplares**.
+![Punto 3 trayectorias](punto_3/img/3_trayectorias.png)
 
-### d) P inicial = 500 (P₀ = 0.5)
-
-0.5 está en (0,1), donde g(P) < 0, así que P decrece hacia P = 0. La población **se extingue** con el tiempo.
-
-### e) ¿Puede una población inicial de 900 ejemplares crecer hasta 1100?
-
-P₀ = 0.9 está en (0,1), donde g(P) < 0 (decreciente), y el equilibrio P = 1 es inestable pero actúa como "techo" para esa franja: dentro de (0,1) la población siempre decrece hacia 0. Como 900 < 1000, la trayectoria no puede cruzar el punto crítico inestable P = 1, así que **no**, no puede llegar a 1100; por el contrario tiende a extinguirse (P → 0).
+- **b) P₀ = 3000:** cae desde la región P > 2 (decreciente) hasta estabilizarse en **2000 ejemplares**.
+- **c) P₀ = 1500:** está en (1,2) (creciente), sube hasta estabilizarse también en **2000 ejemplares**.
+- **d) P₀ = 500:** está en (0,1) (decreciente), la población **se extingue** (P → 0).
+- **e) P₀ = 900:** también está en (0,1) (decreciente). Como 900 < 1000 no puede cruzar el punto crítico inestable P=1, así que **no** puede llegar a 1100 ejemplares; por el contrario, tiende a extinguirse.
 
 ---
 
 ## Punto 4 — Población P(t), dP/dt = 3P - 2P², P en miles
 
+Script: [`punto_4/punto_4.py`](punto_4/punto_4.py)
+
 g(P) = P(3 - 2P)
-
-```
-Roots[3*c-2*c^2==0,c]
-Reduce[3*c-2*c^2>0,c]
-Reduce[3*c-2*c^2<0,c]
-```
-
-Puntos críticos: P = 0, P = 3/2 = 1.5.
-g(P) > 0 en (0, 1.5); g(P) < 0 en (-∞,0) ∪ (1.5,∞).
 
 ### a) Diagrama de fase
 
-- P = 0: **inestable** (decrece por la izquierda, crece por la derecha, ambos lados se alejan).
-- P = 1.5: **asintóticamente estable** (crece por la izquierda, decrece por la derecha, ambos lados se acercan). Es la capacidad de carga del modelo logístico.
+Puntos críticos: P = 0 (**inestable**), P = 1.5 (**asintóticamente estable**, capacidad de carga del modelo logístico).
 
-### b) P inicial = 2000 (P₀ = 2)
+![Punto 4 fase](punto_4/img/4_fase.png)
 
-2 está en la región P > 1.5, donde g(P) < 0, así que la población decrece hacia el equilibrio estable. A largo plazo tiende a **1500 ejemplares**.
+### b), c) y d) — trayectorias P(t)
 
-### c) P inicial = 100 ejemplares (P₀ = 0.1)
+![Punto 4 trayectorias](punto_4/img/4_trayectorias.png)
 
-0.1 está en (0, 1.5), donde g(P) > 0, así que la población crece hacia el equilibrio estable. A largo plazo tiende también a **1500 ejemplares**.
-
-### d) ¿Qué es correcto afirmar de una población de 1500 ejemplares?
-
-1500 ejemplares corresponde exactamente a P = 1.5, el punto de equilibrio asintóticamente estable del modelo. Es correcto afirmar que esa población **se mantiene constante en el tiempo** (es una solución de equilibrio), y que además es la población hacia la que tienden todas las demás soluciones con P₀ > 0.
+- **b) P₀ = 2000:** está por encima de la capacidad de carga (P>1.5, decreciente), baja hasta estabilizarse en **1500 ejemplares**.
+- **c) P₀ = 100:** está en (0, 1.5) (creciente), sube hasta estabilizarse también en **1500 ejemplares**.
+- **d) P₀ = 1500:** ya es exactamente el equilibrio P=1.5, así que la población **se mantiene constante en el tiempo**; es además el valor al que tienden todas las demás soluciones con P₀ > 0.
 
 ### e) Ecuación con nacimientos del 150% por trimestre y muertes s por trimestre
 
-La ecuación original dP/dt = 3P - 2P² está en años, y en ella el término 3P son nacimientos proporcionales a la población y 2P² son muertes por competencia (densidad-dependientes), ambos ya expresados en tasa anual.
+En la ecuación original, 3P son nacimientos proporcionales a la población y 2P² son muertes densidad-dependientes (competencia), ambos en tasa anual. Interpreté "tasa de nacimientos del 150% por trimestre" como que cada individuo genera en promedio 1.5 individuos nuevos por trimestre, y "mueren s ejemplares en ese periodo" como una muerte densidad-dependiente s·P² por trimestre (mismo tipo de término del modelo original, pero con tasa s en vez de 2, ya que el enunciado no da su valor numérico). Anualizando (4 trimestres al año):
 
-Interpreté "tasa de nacimientos del 150% por cada trimestre" como que cada individuo genera en promedio 1.5 individuos nuevos por trimestre, y "mueren s ejemplares en ese mismo periodo" como una muerte densidad-dependiente sP² por trimestre (mismo tipo de término que en el modelo original, pero con tasa s en vez de 2). Como hay 4 trimestres en un año, para llevar la ecuación a tasa anual multiplico ambos términos por 4:
-
-dP/dt = 4(1.5P) - 4(sP²) = 6P - 4sP²
+dP/dt = 4(1.5P) - 4(sP²) = **6P - 4sP²**
 
 ### f) Comportamiento de las soluciones con esa tasa de muertes por trimestre
 
-Con dP/dt = 6P - 4sP² (s > 0), los puntos críticos son P = 0 y P = 6/(4s) = 3/(2s).
+Con sympy, resolviendo 6P - 4sP² = 0 los puntos críticos simbólicos son P = 0 y P = 3/(2s). El comportamiento cualitativo es igual al del modelo logístico original: P = 0 es **inestable** y P = 3/(2s) es **asintóticamente estable**, sin importar la población inicial (mientras sea positiva). A la derecha, el diagrama de fase ilustrado con s = 2 (P = 0 inestable, P = 0.75 estable) y cómo cae la capacidad de carga 3/(2s) a medida que aumenta la tasa de muertes s:
 
-```
-Roots[6*c-4*s*c^2==0,c]
-Reduce[6*c-4*s*c^2>0,c]
-```
+![Punto 4ef fase](punto_4/img/4ef_fase.png)
+![Punto 4ef capacidad vs s](punto_4/img/4ef_capacidad_vs_s.png)
 
-El comportamiento cualitativo es el mismo del modelo logístico: P = 0 es **inestable** y P = 3/(2s) es **asintóticamente estable**. Es decir, sin importar la población inicial (mientras sea positiva), esta siempre tiende a estabilizarse en 3/(2s) miles de ejemplares. Entre más alta sea la tasa de muertes por competencia s, más baja es la capacidad de carga a la que se estabiliza la población.
+Entre más alta la tasa de muertes por competencia s, más baja la capacidad de carga a la que se estabiliza la población.
