@@ -6,7 +6,7 @@ Ecuaciones Diferenciales — 2026
 
 ## Cómo lo resolví
 
-Como asistente computacional usé Python (numpy, matplotlib, scipy y sympy) en lugar de GeoGebra: para el punto 1 armé una función que dibuja el campo de direcciones y superpone la familia de soluciones junto con la solución particular pedida; para los puntos 2, 3 y 4 hallo los puntos críticos con sympy (raíces reales del polinomio g(y) o g(P)), clasifico su estabilidad evaluando el signo de la derivada a lado y lado, y grafico el diagrama de fase junto con la recta de fase. Para el punto 3 y 4 además integro numéricamente (`solve_ivp`) las trayectorias P(t) de cada condición inicial para verificar el comportamiento que predice el diagrama de fase.
+Para el asistente computacional decidí trabajar con Python (numpy, matplotlib, scipy y sympy) en vez de GeoGebra, ya que es la herramienta con la que estoy más familiarizado y me da más control sobre las gráficas. Para el punto 1 monté una función que dibuja el campo de direcciones y le voy superponiendo la familia de soluciones junto con la solución particular pedida. Para los puntos 2, 3 y 4 me apoyé en sympy para hallar los puntos críticos (raíces reales de g(y) o g(P)) y clasificar su estabilidad revisando el signo a lado y lado de cada uno, y con eso armé el diagrama de fase junto con la recta de fase. En los puntos 3 y 4 fui un paso más allá e integré numéricamente (`solve_ivp`) las trayectorias P(t) de cada condición inicial del enunciado, para comprobar que el comportamiento coincidiera con lo que predecía el diagrama de fase.
 
 Cada punto está en su propia carpeta con el script que genera las gráficas (carpeta `img/`).
 
